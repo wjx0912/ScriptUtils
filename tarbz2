@@ -1,0 +1,36 @@
+#!/bin/bash
+if ! hash pv 2>/dev/null; then
+	echo "command pv not exist, please install: sudo apt-get install pv"
+	exit
+fi
+
+if [ $# != 1 ]; then
+	echo "usage: tarbz2 your_path"
+	exit
+fi
+
+#if [ ! -e $1 ]; then
+if [ ! -d $1 ]; then
+	echo "source directory not exist"
+	exit
+fi
+
+#####################################################
+out_file_name=""
+if [[ $1 == */ ]]; then
+	out_file_name=`echo $1 | awk  -F/   '{print $(NF-1)}'`
+else
+	out_file_name=`echo $1 | awk  -F/   '{print $(NF)}'`
+fi
+echo "count dir $1 size ......"
+dir_size=`du -sb $1 | awk '{print $1}'`
+let dir_size_MB=`expr $dir_size/1024/1024`
+echo -e "dir size: \033[33m ${dir_size_MB}M \033[0m"
+
+#####################################################
+echo "do command: tar zcf $out_file_name.tar.bz2 $1"
+tar cf - $1 -P | pv -s $dir_size | bzip2 > $out_file_name.tar.bz2
+
+out_size=`ls -lh $out_file_name.tar.bz2 | awk '{print $5}'`
+echo -e "out size: \033[36m $out_size \033[0m"
+

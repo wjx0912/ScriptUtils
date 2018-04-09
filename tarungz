@@ -1,0 +1,27 @@
+#!/bin/bash
+if ! hash pv 2>/dev/null; then
+	echo "command pv not exist, please install: sudo apt-get install pv"
+	exit
+fi
+
+if [ $# != 2 ]; then
+	echo "usage: targz source_file dest_directory"
+	exit
+fi
+
+if [ ! -f $1 ]; then
+	echo "source file not exist"
+	exit
+fi
+
+if [ ! -d $2 ]; then
+	echo "dest directory not exist"
+	exit
+fi
+
+#####################################################
+out_size=`ls -lh $1 | awk '{print $5}'`
+echo -e "file size: \033[33m $out_size \033[0m"
+
+pv $1 | tar zx -C $2
+
