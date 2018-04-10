@@ -1,0 +1,102 @@
+#!/bin/bash
+#if you like the script, please star project: https://github.com/wjx0912/ScriptUtils
+if ! hash pv 2>/dev/null; then
+	echo "get the latest version: https://github.com/wjx0912/ScriptUtils"
+	echo "command pv not exist, please install: sudo apt-get install pv"
+	exit
+fi
+
+#####################################################
+command_func=`basename $0`
+if [ $# = 2 ] && ([ $command_func = targz ] || [ $command_func = tarbz2 ] || [ $command_func = tarxz ]);then
+	#####################################################
+	#command_afterfix=
+	command_param=
+	command_program=
+	if [ $command_func = targz ]; then
+		#command_afterfix=".tar.gz"
+		command_param="zcf"
+		command_program="gzip"
+	fi
+	if [ $command_func = tarbz2 ]; then
+		#command_afterfix=".tar.bz2"
+		command_param="jcf"
+		command_program="bzip2"
+	fi
+	if [ $command_func = tarxz ]; then
+		#command_afterfix=".tar.xz"
+		command_param="Jcf"
+		command_program="xz"
+	fi
+
+	#####################################################
+	if [[ ! -d $2 && ! -e $2 ]]; then
+		echo "source file or directory not exist"
+		exit
+	fi
+
+	#####################################################
+	#echo source file or directory size, for debug
+	echo "count source size $2, please wait"
+	dir_size=`du -sb $2 | awk '{print $1}'`
+	let dir_size_MB=`expr $dir_size/1024/1024`
+	echo -e "source size: \033[33m ${dir_size_MB}M \033[0m"
+
+	#####################################################
+	#out_file_name=`echo $2 | awk  -F/   '{print $(NF-1)}'`
+	#out_file_name=`echo $2 | awk  -F/   '{print $(NF)}'`
+	#out_file_name=`basename $2`$command_afterfix
+	echo "do command: tar $command_param $1 $2"
+	tar cf - $2 -P | pv -s $dir_size | $command_program > $1
+
+	#####################################################
+	out_size=`ls -lh $1 | awk '{print $5}'`
+	echo -e "out size: \033[36m $out_size \033[0m"
+elif [ $# = 2 ] && ([ $command_func = untargz ] || [ $command_func = untarbz2 ] || [ $command_func = untarxz ]);then
+	#####################################################
+	if [ ! -f $1 ]; then
+		echo "source file not exist"
+		exit
+	fi
+
+	mkdir -p $2
+	if [ ! -d $2 ]; then
+		echo "dest directory not exist"
+		exit
+	fi
+
+	#####################################################
+	command_param=
+	if [ $command_func = untargz ]; then
+		command_param="zx"
+	fi
+	if [ $command_func = untarbz2 ]; then
+		command_param="jx"
+	fi
+	if [ $command_func = untarxz ]; then
+		command_param="Jx"
+	fi
+
+	#####################################################
+	out_size=`ls -lh $1 | awk '{print $5}'`
+	echo -e "file size: \033[33m $out_size \033[0m"
+
+	pv $1 | tar $command_param -C $2
+else
+	echo -e "\033[33mget the latest version:\033[0m https://github.com/wjx0912/ScriptUtils"
+	echo -e "\033[33msupport commands:\033[0m targz, tarbz2, tarxz, untargz, untarbz2, untarxz"
+	echo "ln -s supertar targz"
+	echo "ln -s supertar tarbz2"
+	echo "ln -s supertar tarxz"
+	echo "ln -s supertar untargz"
+	echo "ln -s supertar untarbz2"
+	echo "ln -s supertar untarxz"
+	echo -e "\033[33mexample:\033[0m"
+	echo "targz     file1.tar.gz   /mnt/big_files_directory/"
+	echo "tarbz2    file2.tar.bz2  /mnt/big_files_directory/"
+	echo "tarxz     file3.tar.xz   ./big_file"
+	echo "untargz   file1.tar.gz   /you_path"
+	echo "untarbz2  file2.tar.bz2  /you_path"
+	echo "untarxz   file3.tar.xz   ./"
+	exit
+fi
